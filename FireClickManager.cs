@@ -9,6 +9,7 @@ public class FireClickManager : MonoBehaviour
     private bool isDragging;
     private Vector2 dragStart, dragEnd;
     private FireTruckController[] allTrucks;
+    private const float dragThreshold = 5f;
 
     private List<FireTruckController> selectedUnits = new();
 
@@ -43,30 +44,15 @@ public class FireClickManager : MonoBehaviour
             if (selectionBox != null)
                 selectionBox.gameObject.SetActive(false);
             isDragging = false;
+            dragEnd = Input.mousePosition;
 
-            Rect rect = new Rect(
-                Mathf.Min(dragStart.x, dragEnd.x),
-                Mathf.Min(dragStart.y, dragEnd.y),
-                Mathf.Abs(dragStart.x - dragEnd.x),
-                Mathf.Abs(dragStart.y - dragEnd.y)
-            );
-
-            if (!Input.GetKey(KeyCode.LeftShift) && !Input.GetKey(KeyCode.RightShift))
+            if ((dragEnd - dragStart).magnitude < dragThreshold)
             {
-                DeselectAll();
+                HandleClickSelection();
             }
-
-            foreach (var truck in allTrucks)
+            else
             {
-                Vector3 screenPos = Camera.main.WorldToScreenPoint(truck.transform.position);
-                if (rect.Contains(screenPos))
-                {
-                    if (!selectedUnits.Contains(truck))
-                    {
-                        selectedUnits.Add(truck);
-                        truck.Select();
-                    }
-                }
+                HandleDragSelection();
             }
 
             uiManager.RefreshUnitUI(selectedUnits);
@@ -92,5 +78,68 @@ public class FireClickManager : MonoBehaviour
             truck.Deselect();
         }
         selectedUnits.Clear();
+    }
+
+    private void HandleClickSelection()
+    {
+        Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
+        if (Physics.Raycast(ray, out RaycastHit hit))
+        {
+            FireTruckController truck = hit.collider.GetComponent<FireTruckController>();
+            if (truck != null)
+            {
+                if (!Input.GetKey(KeyCode.LeftShift) && !Input.GetKey(KeyCode.RightShift))
+                {
+                    DeselectAll();
+                }
+
+                if (!selectedUnits.Contains(truck))
+                {
+                    selectedUnits.Add(truck);
+                    truck.Select();
+                }
+                else if (Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift))
+                {
+                    selectedUnits.Remove(truck);
+                    truck.Deselect();
+                }
+            }
+            else if (!Input.GetKey(KeyCode.LeftShift) && !Input.GetKey(KeyCode.RightShift))
+            {
+                DeselectAll();
+            }
+        }
+        else if (!Input.GetKey(KeyCode.LeftShift) && !Input.GetKey(KeyCode.RightShift))
+        {
+            DeselectAll();
+        }
+    }
+
+    private void HandleDragSelection()
+    {
+        Rect rect = new Rect(
+            Mathf.Min(dragStart.x, dragEnd.x),
+            Mathf.Min(dragStart.y, dragEnd.y),
+            Mathf.Abs(dragStart.x - dragEnd.x),
+            Mathf.Abs(dragStart.y - dragEnd.y)
+        );
+
+        if (!Input.GetKey(KeyCode.LeftShift) && !Input.GetKey(KeyCode.RightShift))
+        {
+            DeselectAll();
+        }
+
+        foreach (var truck in allTrucks)
+        {
+            Vector3 screenPos = Camera.main.WorldToScreenPoint(truck.transform.position);
+            if (rect.Contains(screenPos))
+            {
+                if (!selectedUnits.Contains(truck))
+                {
+                    selectedUnits.Add(truck);
+                    truck.Select();
+                }
+            }
+        }
     }
 }
