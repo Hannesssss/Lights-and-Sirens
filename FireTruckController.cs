@@ -2,7 +2,6 @@ using UnityEngine;
 
 public class FireTruckController : MonoBehaviour
 {
-    public static FireTruckController selectedTruck;
     private VehicleMover mover;
 
     [Header("Selection State")]
@@ -29,12 +28,6 @@ public class FireTruckController : MonoBehaviour
 
     public void Select()
     {
-        if (selectedTruck != null && selectedTruck != this)
-        {
-            selectedTruck.Deselect();
-        }
-
-        selectedTruck = this;
         isSelected = true;
 
         if (selectionRing != null)
@@ -45,10 +38,9 @@ public class FireTruckController : MonoBehaviour
 
     public static void DeselectAll()
     {
-        if (selectedTruck != null)
+        foreach (var truck in FindObjectsOfType<FireTruckController>())
         {
-            selectedTruck.Deselect();
-            selectedTruck = null;
+            truck.Deselect();
         }
     }
 
@@ -64,12 +56,7 @@ public class FireTruckController : MonoBehaviour
 
     public void OnSelectedExternally()
     {
-        selectedTruck = this;
-        isSelected = true;
-
-        if (selectionRing != null)
-            selectionRing.SetActive(true);
-
+        Select();
         Debug.Log("✅ Selected (UI): " + gameObject.name);
     }
 
