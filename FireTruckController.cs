@@ -21,10 +21,6 @@ public class FireTruckController : MonoBehaviour
             selectionRing.SetActive(false);
     }
 
-    private void OnMouseDown()
-    {
-        Select();
-    }
 
     public void Select()
     {
